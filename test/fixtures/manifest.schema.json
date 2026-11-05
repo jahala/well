@@ -1,0 +1,383 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plotplot.ai/contracts/manifest.schema.json",
+  "title": "garden.json",
+  "description": "The bed manifest every garden tool ships at its repository root, per docs/plans/stem.md \u00a74 and plotplot-ai issue 31 (the coverage block). See contracts/identifiers.md for the season referenced by garden.lock, which this manifest's install targets are pinned against.",
+  "type": "object",
+  "required": [
+    "name",
+    "kind"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "the bed's own name, lowercase always"
+    },
+    "summary": {
+      "type": "string",
+      "description": "one sentence, optional, for a human reading the manifest directly"
+    },
+    "kind": {
+      "type": "array",
+      "description": "the roles this bed plays in the garden (as of 2026-09: gate, hook, channel, capability, conductor are in use; the list is open, not a closed enum, because a bed may need a role none of these name). A planted repository that is not a bed declares kind [\"repository\"]; it then needs only name and kind, and may carry smoke and coverage.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$",
+      "description": "semantic version of the bed itself, not of this manifest"
+    },
+    "install": {
+      "type": "object",
+      "description": "how to obtain the bed; at least one of cargo, npm, pip, git or binaries is required, since a bed must be installable by at least one real mechanism. git names a bed distributed today by cloning or vendoring its repository rather than through a package manager.",
+      "properties": {
+        "cargo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "npm": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pip": {
+          "type": "string",
+          "minLength": 1
+        },
+        "git": {
+          "type": "object",
+          "description": "a bed distributed by cloning its repository rather than through a package manager; pinned by a full commit sha, never a branch or tag, so the fetch is reproducible",
+          "required": [
+            "url",
+            "rev"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://"
+            },
+            "rev": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          }
+        },
+        "binaries": {
+          "type": "object",
+          "description": "per-platform-triple download URL, keyed by Rust-style target triple",
+          "propertyNames": {
+            "pattern": "^[a-z0-9_]+(-[a-z0-9_]+){2,4}$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://"
+          },
+          "minProperties": 1
+        },
+        "binary_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "the executable's file name inside the release artifact; defaults to faces.cli"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "cargo"
+          ]
+        },
+        {
+          "required": [
+            "npm"
+          ]
+        },
+        {
+          "required": [
+            "pip"
+          ]
+        },
+        {
+          "required": [
+            "git"
+          ]
+        },
+        {
+          "required": [
+            "binaries"
+          ]
+        }
+      ],
+      "additionalProperties": true
+    },
+    "faces": {
+      "type": "object",
+      "description": "the bed's surfaces: a CLI, a skill, hook entries per harness, git hook entries. At least one face is required.",
+      "properties": {
+        "cli": {
+          "type": "string",
+          "minLength": 1,
+          "description": "the primary command name"
+        },
+        "skill": {
+          "type": "string",
+          "minLength": 1,
+          "description": "path to the bed's SKILL.md inside the release artifact (the same path it has in the repository), so the stem can copy it into bundles"
+        },
+        "hooks": {
+          "type": "object",
+          "description": "harness name to the list of hook events this bed registers on that harness",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "git": {
+          "type": "array",
+          "description": "git hook names this bed installs into core.hooksPath, and that a planter may install on the bed's behalf from this manifest; the bed recognises an installed hook by what it invokes (its own face), never by a marker only the bed writes. commit-msg is where an allowance trailer can first be read, so a bed whose block-level findings a trailer may allow declares it beside pre-commit",
+          "items": {
+            "type": "string",
+            "enum": [
+              "pre-commit",
+              "commit-msg",
+              "pre-push",
+              "pre-rebase",
+              "post-commit",
+              "reference-transaction"
+            ]
+          }
+        },
+        "mcp": {
+          "type": "object",
+          "description": "present only for a bed that is a channel: the tool count, kept low per the zero-tax-presence invariant, and how the stem launches the server in a generated .mcp.json",
+          "required": [
+            "tools"
+          ],
+          "properties": {
+            "tools": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "command": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the executable, resolved on PATH or relative to the artifact root"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "arguments, paths relative to the artifact root"
+            },
+            "env": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9_]*$"
+              },
+              "description": "environment variable names the server reads; the stem writes them into the bundle for the planter to fill"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "cli"
+          ]
+        },
+        {
+          "required": [
+            "skill"
+          ]
+        },
+        {
+          "required": [
+            "hooks"
+          ]
+        },
+        {
+          "required": [
+            "git"
+          ]
+        },
+        {
+          "required": [
+            "mcp"
+          ]
+        }
+      ],
+      "additionalProperties": true
+    },
+    "check": {
+      "description": "the command that runs this bed's gate and emits SARIF 2.1.0 on stdout (F2); null for a bed with no gate of its own (kind does not include \"gate\")",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "metric": {
+      "type": "string",
+      "minLength": 1,
+      "description": "the command that measures this bed's one falsifiable metric (F5)"
+    },
+    "context": {
+      "type": "object",
+      "required": [
+        "upfront_tokens"
+      ],
+      "properties": {
+        "upfront_tokens": {
+          "description": "measured startup context cost (F4): the skill description plus tool schemas a session pays before speaking. null when genuinely unmeasured (invariant 6, \"measured or silent\": a bed that cannot yet be measured does not get to speak at session start); 0 is a true zero, not an unmeasured gap, for a bed with no skill or MCP face.",
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "coverage": {
+      "type": "object",
+      "description": "plotplot-ai issue 31: which languages and file kinds this bed's judgement actually covers, so silence on an unsupported language is declared rather than read as clean. Either array may be empty for a bed whose rules are language-agnostic (tend2, pollen) or that covers no file kinds at all (a pure conductor).",
+      "required": [
+        "languages",
+        "kinds"
+      ],
+      "properties": {
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "kinds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "flagged": {
+      "type": "array",
+      "description": "unknowns this manifest's author could not resolve, named rather than guessed",
+      "items": {
+        "type": "object",
+        "required": [
+          "what",
+          "why"
+        ],
+        "properties": {
+          "what": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "smoke": {
+      "type": "object",
+      "description": "a planted repository's own entry points that must run (tend 153): each is an argv array, never a shell string, run in the repository root by scripts/smoke.sh and by pleach's smoke gate; weeder never executes them",
+      "required": [
+        "commands"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "argv"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "argv": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "timeout_ms": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 5000
+              },
+              "expect_exit": {
+                "type": "integer",
+                "minimum": 0,
+                "default": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "contains": {
+              "const": "repository"
+            }
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "name",
+          "kind"
+        ]
+      },
+      "else": {
+        "required": [
+          "name",
+          "kind",
+          "version",
+          "install",
+          "faces",
+          "check",
+          "metric",
+          "context",
+          "coverage"
+        ]
+      }
+    }
+  ]
+}

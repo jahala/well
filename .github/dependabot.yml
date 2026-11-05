@@ -1,0 +1,24 @@
+# Dependabot: version updates only.
+#
+# Ecosystems present in well:
+#   - npm            (package.json: the type checker and the schema validator, dev only)
+#   - github-actions (the pinned action shas in .github/workflows)
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]

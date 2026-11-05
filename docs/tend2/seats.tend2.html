@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>seats</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<script type="text/markdown" id="loop">
+# seats: no session starts that would exhaust the shared window
+**Goal.** A seat budget refuses the agent session that would exhaust a subscription's usage window, before it starts, by the provider's own reading of the window and the sessions running at once. Two sources of readings are built; the start gate waits until a measured week shows the readings would have refused the starts that used up a window.
+
+## Tests
+- [x] (code) seat note writes the reading from the statusLine input, prints a short status line, appends only when a session's reading changes, and exits 0 on every error · test/seat-note.test.ts @bc0606697298bb · by cli
+- [x] (code) the conductor source reads only the session, the time and the windows of each rate_limit_event, never writes the database, and names a change to its schema · test/conductor.test.ts @8140f706811d68 · by cli
+- [ ] (code) every source's real sample parses to a reading with its window, percent and reset, and a reading past its reset reads as unknown · test/seats.test.ts
+- [ ] (code) a start is refused when the live sessions reach the cap, or when the freshest valid reading plus the estimates held passes the stop line · test/seats.test.ts
+
+## Needs
+- #ledger
+
+## For
+- #the-owner
+
+## Tried
+- 2026-11-05 the repository went public with a fresh history. The plan, its backtest and the coverage weeks measured one owner's own sessions, so they stay in that owner's private record; the start gate is built here once a week of readings clears the bar fixed there before it ran
+</script>
+<script src="loop.js"></script>

@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+# Jobs run on GitHub's macOS runners: the keys tests need /usr/bin/security and
+# /usr/bin/python3. A public repository must never run a stranger's pull request on
+# a maintainer's machine, so self-hosted runners are opt-in only, through the
+# repository variable CI_RUNS_ON, which stays unset while the repository is public
+# (docs/engineering.md, "Where CI runs").
+
+jobs:
+  # The repository's own suite: the type check, then the tests through
+  # scripts/test.ts, which also fails when a run leaves files behind.
+  check:
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '"macos-latest"') }}
+    steps:
+      - run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+      # The whole history, because test/manifest.test.ts checks that the commit garden.json's
+      # install pin names is in it and carries the command.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm run check
+      # The rule's home is the umbrella's vector; the copy here must be byte for byte the
+      # same as the umbrella's at the commit test/fixtures/ledger-vector.pin names.
+      - name: Compare the vector with the umbrella
+        run: |
+          commit="$(grep -oE 'at [0-9a-f]{7,40}' test/fixtures/ledger-vector.pin | head -1 | cut -d' ' -f2)"
+          curl -fsSL --max-time 30 "https://raw.githubusercontent.com/jahala/plotplot/${commit}/contracts/fixtures/ledger/vector.json" -o "$RUNNER_TEMP/umbrella-vector.json"
+          cmp test/fixtures/ledger-vector.json "$RUNNER_TEMP/umbrella-vector.json"
+          curl -fsSL --max-time 30 "https://raw.githubusercontent.com/jahala/plotplot/${commit}/contracts/fixtures/ledger/lock.json" -o "$RUNNER_TEMP/umbrella-lock.json"
+          cmp test/fixtures/ledger-lock.json "$RUNNER_TEMP/umbrella-lock.json"
+      # garden.json is validated against a copy of the umbrella's manifest schema, which must be
+      # byte for byte the umbrella's at the commit test/fixtures/manifest.schema.pin names.
+      - name: Compare the manifest schema with the umbrella
+        run: |
+          commit="$(grep -oE 'at [0-9a-f]{7,40}' test/fixtures/manifest.schema.pin | head -1 | cut -d' ' -f2)"
+          curl -fsSL --max-time 30 "https://raw.githubusercontent.com/jahala/plotplot/${commit}/contracts/manifest.schema.json" -o "$RUNNER_TEMP/umbrella-manifest.schema.json"
+          cmp test/fixtures/manifest.schema.json "$RUNNER_TEMP/umbrella-manifest.schema.json"
+
+  # The map lint, with tend2 built from jahala/tend at the pinned commit.
+  # jahala/tend is private, so the checkout reads it with a read-only deploy key,
+  # which a pull request from a fork cannot see; the map lint runs on pushes and on
+  # this repository's own branches.
+  map:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ fromJSON(vars.CI_RUNS_ON || '"macos-latest"') }}
+    steps:
+      - run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: jahala/tend
+          ref: c17ed38d7a89937501fc6b16fe8707c428482b2b
+          ssh-key: ${{ secrets.TEND_DEPLOY_KEY }}
+          path: .tend
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: Build tend2
+        run: npm ci && npm run build
+        working-directory: .tend
+      - name: Lint the map
+        run: node .tend/dist/cli.js lint --strict docs/tend2

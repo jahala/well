@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>command</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<script type="text/markdown" id="loop">
+# command: reserve, settle and release from any language
+**Goal.** `well reserve`, `well settle` and `well release` let a client in any runtime spend through the ledger by calling one command, so the rule has one implementation; `well status` shows a budget's spent, held and cap, and `well breaches` counts the months whose spend passed the cap, which must stay zero. Each prints one JSON line and exits 0 when allowed, 1 when refused and 2 on a usage error, so a caller gates on the exit code.
+
+## Tests
+- [x] (code) the command's answers equal the library's on every step of the vector, run as a child process against real files, and it writes the same ledger · test/command.test.ts @606c783f91131a · by cli
+- [x] (code) status sums match the ledger after every step, and hold a reservation still open from the month before · test/command.test.ts @4ffcbf6f91131a · by cli
+- [x] (code) a usage error exits 2 and writes nothing; with no budget every command refuses with exit 1 and writes nothing · test/command.test.ts @ad6e903f91131a · by cli
+- [x] (code) breaches names every month whose settled spend passed its cap, and is zero when none did · test/command.test.ts @ef5eaa2f91131a · by cli
+- [x] (code) garden.json is a bed's manifest, valid against the umbrella's schema, and its command, metric and install pin are true of this tree · test/manifest.test.ts · reads: garden.json, package.json, test/fixtures/ @e3d4486d8f023a · by cli
+
+## Needs
+- #ledger
+
+## For
+- #the-owner
+
+## Tried
+- 2026-10-27 planned, not built
+- 2026-10-26 built on cape-town's order: the five checks were written first and failed for want of the command, then passed. The command matches the library on all 14 steps of the vector and writes a byte-identical ledger. Exit 3 was added for a ledger folder that cannot be read, so an I/O failure never reads as a refusal. `well run` moved to the keys loop. Installing a copy fails because Node will not strip types under node_modules, so well installs from a clone (docs/architecture.md)
+</script>
+<script src="loop.js"></script>

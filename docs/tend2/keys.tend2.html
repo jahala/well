@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keys</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<script type="text/markdown" id="loop">
+# keys: well is the one door a cooperating client asks for a secret
+**Goal.** A secret is read from the Keychain at the moment of the call that needs it, handed only to that call, and never printed, logged, written or passed on a command line. `well run --budget <name> --tool <name> --key <sha256> --estimate <usd> --secret <service/account> --env <NAME> -- <command>` reserves, reads the secret, puts it in the child's environment under the name the caller gives, and settles the charge the child writes to the file `WELL_CHARGE` names, or releases when the child writes that it never sent. `well key set <service/account>` generates a secret, stores it by sending the command on the standard input of `security -i`, and reads it back to refuse an empty one. `well key put <service/account>` stores a secret a provider issued, read as one line from standard input with echo off, never from an argument.
+
+## Tests
+- [x] (code) key set stores a generated secret that reads back non-empty, prints it nowhere and never replaces one; a store that reads back empty is refused and removed · test/keys.test.ts @7cea8565739b7d · by cli
+- [x] (code) a made-up secret appears in no output of well, no file, and no process's arguments, and reaches the child only in the variable the caller names · test/keys.test.ts @77366985739b7d · by cli
+- [x] (code) a refused reservation means the child never starts and the Keychain is never asked; a call whose reservation is still open is never run again · test/keys.test.ts @f64c2cc5739b7d · by cli
+- [x] (code) run settles, releases or leaves the reservation open by what the child reports, and exits with the child's code · test/keys.test.ts @82258fb5739b7d · by cli
+- [x] (code) a missing or empty secret, or a command that cannot start, is refused before the child runs and its reservation released as not sent · test/keys.test.ts @7e84b325739b7d · by cli
+- [x] (code) a usage error in run or key set exits 2 and writes nothing · test/keys.test.ts @94165ee5739b7d · by cli
+- [x] (code) key put stores the one line on standard input, read with echo off on a terminal, reads it back equal and never replaces one; an empty line, more than one line, or a character security -i could misread is refused and nothing stored · test/keys.test.ts @0e46e935739b7d · by cli
+
+## Needs
+- #command
+
+## For
+- #the-owner
+
+## Tried
+- 2026-10-27 planned, not built; mull found that piping a value into `security add-generic-password -w` stores an empty password
+- 2026-10-26 built on cape-town's order: the six checks were written first and failed for want of the code, then passed. Moving the secret into the child's arguments, or reading it before the reservation, each made a check fail. A keychain created through `security -i` stays off the owner's search list, `security -i` exits non-zero when its command fails, and `ps -E` shows no other process's environment on this macOS. The item is named with `--secret`, because `--key` is the request's sha256 everywhere else (docs/architecture.md)
+- 2026-10-27 `well key put` built on cape-town's order: its check was written first and failed. The echo check, run through a pseudo-terminal, caught the first draft asking before echo was off; removing echo-off made it fail again
+- 2026-11-04 a release `well run` cannot write is reported: the report says `left_open` with the reason, where before the key stayed blocked in silence. Dropping the report made the check fail
+- 2026-11-04 key put's terminal edges: the read runs in a shell that restores the terminal however it ends, asks only once echo is off, and drains a multi-line paste so nothing pending runs in the owner's shell. Tested through a pseudo-terminal; leaving out the drain made the paste check fail. A failing `stty -echo` cannot be made on a real terminal in the suite, so that refusal is untested
+- 2026-11-04 the docs now say plainly that the door holds for cooperating clients only (on plotplot's decision): any program running as the owner can read an item well stored, and enforcing more would need a signed program or a locked keychain
+</script>
+<script src="loop.js"></script>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>well</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<script type="text/markdown" id="loop">
+# well: one door for every call that costs money or needs a key
+**Goal.** Every program the owner runs spends through one shared ledger: it reserves the estimate before a paid call, is refused when the owner's budget would be passed by everything spent and held, settles what was charged, and never resends a call that may already have been charged. The bet holds if the clients that spend on one budget together never pass its cap over a month, and if the month's ledger matches the provider's bill within the size of one call.
+
+**Who.** [The owner](the-owner.tend2.html), whose tools spend money on their own.
+
+**Pain.** Each tool keeps its own cap, so each stays under it while together they overspend. A call that timed out may have been charged, and a naive retry pays twice. Keys sit in environment variables and files where agents can read and print them.
+
+## How well works
+The [ledger](ledger.tend2.html) is the first part: one append-only file per budget per month, a directory as the lock, and a rule written once as a test vector in the umbrella that every client passes. The [command](command.tend2.html) is the second, so a client in any language calls well instead of carrying the library. [Keys](keys.tend2.html) are the third, so well is the one door a cooperating client asks for a secret. [Seats](seats.tend2.html), planned, would budget the shared agent window the way the ledger budgets money.
+
+well is a library and a command over files, never a proxy or a server.
+
+## Tests
+- [ ] (human) the goal above states the real bet, not a placeholder
+- [ ] (code) the suite runs, counts at least one test, and fails when a run leaves a file behind · scripts/test.ts · reads: test/
+- [ ] (code) the core page holds at most 150 lines, the instruction file imports it, and every path the core page, architecture and engineering pages cite resolves · test/references.test.ts · reads: AGENTS.md, CLAUDE.md, docs/
+- [ ] (code) no file this repository wrote carries an em dash · test/hard-limits.test.ts
+- [x] (code) the bed page's lede is the README's lead paragraph, and its proof band carries the package's version, its runtime dependencies and the core page's invariants · test/page.test.ts · reads: index.html, README.md, package.json, AGENTS.md @399836ed43e21f · by cli
+
+## Children
+- #ledger
+- #command
+- #keys
+- #seats
+
+## For
+- #the-owner
+
+## Tried
+- 2026-10-27 repository created by cape-town on the owner's word, set up like glean and mull; the ledger moved here from the owner's judge runner, where it had landed the night before in a folder with no history
+- 2026-10-27 garden.json declares a planted repository until well ships its first command (docs/architecture.md)
+- 2026-10-26 the command shipped and garden.json became a bed's manifest: a capability with the `well` command, installed from a clone at a pinned commit, with `well breaches` as its metric
+- 2026-10-26 keys shipped: `well run` and `well key set`; version 0.2.0
+- 2026-11-04 the test gaps closed: rounding to the millionth pinned, the same key in two budgets, the runner shown to fail a leftover, and every test refusing to start without WELL_TMP, so tend2 verify now runs through scripts/test.ts and its leftover check
+- 2026-11-04 the layer rules are held by a test: no clock, environment, home or temporary-folder read outside the command but the lock's named three, and each module imports only its layers. It failed first on `well run` reading the environment itself, which the command now passes in; an import the ledger may not have made it fail again
+- 2026-11-05 the bed page landed as index.html, from plotplot v1.11.0's reference, unpublished until the owner opens the repository; its lede and the README's lead are one text, held by test/page.test.ts, which failed first on the old README lead
+</script>
+<script src="loop.js"></script>

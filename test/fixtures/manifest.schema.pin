@@ -1,0 +1,2 @@
+jahala/plotplot contracts/manifest.schema.json at 082c94f, sha256 0ec31153e073b1038eef08191a57bc068ed8d03d8b742a676b11ddec1af8d7ee
+The shape of garden.json every bed ships. test/manifest.test.ts validates garden.json against this copy; CI compares it with the umbrella byte for byte.

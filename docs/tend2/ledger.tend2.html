@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ledger</title>
+<link rel="stylesheet" href="loop.css">
+<body>
+<script type="text/markdown" id="loop">
+# ledger: reserve before the call, settle after, never resend blind
+**Goal.** `src/ledger.ts` decides every reserve, settle and release by the rule in the umbrella's vector, under a directory lock shared by clients in any runtime, so the cap holds across programs and a call that may have been charged is never sent again without a person's word.
+
+## Tests
+- [x] (code) every step of the vector gets the decision the vector names, and a line is written exactly when the step is allowed · test/ledger.test.ts @a80f709cbbfcc0 · by cli
+- [x] (code) the vector matches its pin, and CI compares it with the umbrella's copy byte for byte · test/ledger.test.ts · reads: test/fixtures/ @de7f81db8629a6 · by cli
+- [x] (code) with no budget, nothing is written and the event is refused · test/ledger.test.ts @cecbe0ecbbfcc0 · by cli
+- [x] (code) an open reservation from the month before still blocks the same key · test/ledger.test.ts @1d6ea5bcbbfcc0 · by cli
+- [x] (code) a stale lock is removed, and a live one makes the writer wait and then give up without taking it · test/ledger.test.ts @3a43023cbbfcc0 · by cli
+
+- [x] (code) every across-months case of the vector and every lock case from the umbrella gets the outcome it names: a reservation stays open however old, and a stale lock is broken only under the breaker · test/ledger.test.ts · reads: test/fixtures/ @9a1e2b8b8629a6 · by cli
+- [x] (code) the running totals equal a full reread after every event of a random history, with writers that never touch them, torn lines, a lost state file and a line written to an older month, and a decision's cost stays flat from a thousand lines to two hundred thousand · test/totals.test.ts @eaf8142b10f279 · by cli
+- [x] (code) every pacing case of the vector gets the decision it names, and a budget's own day and week limits win over those derived from its cap · test/ledger.test.ts · reads: test/fixtures/ @af7dc6eb8629a6 · by cli
+- [x] (code) many writers meeting at a stale lock at the same instant never pass the cap, every allowed reserve is written, and none crashes after writing · test/lock.test.ts @88968de9608e8d · by cli
+- [x] (human) cape-town decides whether a reserve line carries the cap it was decided under, as a change to the umbrella's vector, so a breach is judged against the cap in force that month (proposal in Tried, 2026-10-26) @322289b1ede316 · by human:cape-town
+- [x] (code) an allowed reserve writes the cap it was decided under, and every month of the vector's breaches is judged as the vector names, from real files · test/ledger.test.ts @09cbb44cbbfcc0 · by cli
+
+## For
+- #the-owner
+
+## Tried
+- 2026-10-26 cultivate drafted the contract and the vector (jahala/cultivate PR 5); the umbrella landed them (jahala/plotplot PR 159); the owner's judge runner gained the ledger, all 14 steps passing, and the vector caught a cap check made strict at step 13
+- 2026-10-27 moved here as TypeScript; the judge runner carries a byte-identical copy
+- 2026-10-26 open, not built: `well breaches` judges every month against today's cap, because the ledger records no past caps. Proposal: every reserve line carries `cap_usd`, the cap it was decided under, and a month breaches when its settled spend passes the highest cap its reserves carry. Old lines without it are judged against today's cap and named as such. This is a vector change, so it starts in the umbrella; cape-town decides whether to take it
+- 2026-10-27 cape-town accepted the proposal; the umbrella landed it as drafted here (jahala/plotplot PR 170, a12dad3), and the vector is pinned at that commit. src/ledger.ts writes `cap_usd` on every allowed reserve and judges each month by the highest cap its reserves carry; stopping the write made three checks fail
+- 2026-10-27 budgets.json is read strictly: a period other than month, a cap that is not a number of dollars, or an unknown field exits 3 and names the fault, where before a year's budget was enforced per month and a mistyped cap read as a missing budget
+- 2026-10-27 the stale-lock race fixed: many writers meeting at a stale lock passed the cap in 5 of 20 synchronised trials, because a waiter could remove the fresh lock another had just taken. A stale lock is now broken by one waiter at a time under a second lock; 60 trials never passed the cap. The other clients still break stale locks the old way until the umbrella's contract adds the breaker
+- 2026-10-27 amounts checked once: a settle of 1 followed by 400 zeros was written as null and counted as nothing spent, and an amount under a millionth held nothing. The command, the charge file and the library now refuse an amount that is not a plain decimal of at most six places from 0 to 1,000,000; allowing a seventh place made two checks fail
+- 2026-10-27 `--at` removed from reserve, settle and release, on cape-town's decision: with it a caller could spend in an empty month or resend a key open in the real one. The command tests now write history through the library and act in the present
+- 2026-11-04 the vector pinned at b22982d, with the umbrella's lock cases: a reservation now stays open however old, read from every month up to this one, and every lock case holds. Reading only the month before made the across-months check fail again; pacing comes next
+- 2026-11-04 a torn last line no longer halts spending (found by cultivate in production): readers skip and count a line that is not a whole event, status shows torn_lines, and the next event starts a fresh line. Gluing the next event to the fragment made the check fail; the seat log got the same fix
+- 2026-11-04 a decision folds in only what is new: running totals in state.json. On a copy of the real 180,000-line ledger the first decision built the state in 135 ms and each after it took 2 to 3 ms. Folding an older month out of order, or skipping a trailing partial line, each made a check fail
+- 2026-11-04 pacing built: day and week limits inside the month, windows counted by the minute, `well status` shows the day and week. Building it found a fault in the umbrella vector b22982d, mine: under the full rule, the steps' week of 1.00 binds once step 15 raises the cap to 1.50, and the across-months cases get the derived $0.10 day. The correction, with the minute rule and two boundary cases, landed in the umbrella as 9bf3e32, byte for byte; well pins it and passes it whole, and removing the day check made the pacing checks fail
+</script>
+<script src="loop.js"></script>

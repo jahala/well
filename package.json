@@ -1,0 +1,25 @@
+{
+  "name": "well",
+  "version": "0.8.0",
+  "private": true,
+  "type": "module",
+  "description": "The one door for every call that costs money or needs a key: budgets, reservations and the record of what was charged, as files.",
+  "license": "MIT",
+  "bin": {
+    "well": "src/cli.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node scripts/test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "typescript": "^7.0.2"
+  }
+}

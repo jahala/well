@@ -1,0 +1,3 @@
+jahala/plotplot contracts/fixtures/ledger/vector.json at 9bf3e32 (umbrella 9bf3e32), sha256 0da0cccda5c3ff1cdd031825041127c5b29c51c88ec16ec29716b821115fa123
+jahala/plotplot contracts/fixtures/ledger/lock.json at 9bf3e32 (umbrella 9bf3e32), sha256 caeae7e7ecf453a8c8f12a5fdf75988a3e40aedf103ed4bb37487229b5f5a1bc
+The rule of the shared spending ledger lives in these fixtures, not in any client. Copy them whole when the umbrella changes them; CI compares them with the umbrella byte for byte.

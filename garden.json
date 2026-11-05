@@ -1,0 +1,62 @@
+{
+  "name": "well",
+  "summary": "the one door for every call that costs money or needs a key: budgets, reservations and the record of what was charged",
+  "kind": [
+    "capability"
+  ],
+  "version": "0.8.0",
+  "install": {
+    "git": {
+      "url": "https://github.com/jahala/well.git",
+      "rev": "784d03f52217b65bafce49e5d6f0ccda7c38de44"
+    }
+  },
+  "faces": {
+    "cli": "well"
+  },
+  "check": null,
+  "metric": "well breaches",
+  "context": {
+    "upfront_tokens": 0
+  },
+  "coverage": {
+    "languages": [],
+    "kinds": [
+      "json",
+      "jsonl"
+    ]
+  },
+  "smoke": {
+    "commands": [
+      {
+        "argv": [
+          "npm",
+          "test"
+        ],
+        "timeout_ms": 60000
+      }
+    ]
+  },
+  "flagged": [
+    {
+      "what": "install.git.rev",
+      "why": "names the release commit for 0.8.0, kept in master's history by a merge commit. Every landing after it leaves the pin behind; test/manifest.test.ts holds that the pin is in this history and carries the command, and moving it is the umbrella's call."
+    },
+    {
+      "what": "install.git",
+      "why": "Node will not strip types from a file under node_modules, so well runs from a clone: clone at the pinned commit, then run `npm install -g .` inside it, which links the clone. Installing it as a copy, from a tarball or through npm from the git URL, fails with ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING."
+    },
+    {
+      "what": "metric",
+      "why": "`well breaches` reads the owner's ledger folder and counts the months whose settled spend passed the highest cap their reserve lines carry; it must be zero. Months written before reserves carried the cap are judged against the cap budgets.json names today, and each breach names which cap it used."
+    },
+    {
+      "what": "context.upfront_tokens",
+      "why": "a true zero: well has no skill and no MCP face."
+    },
+    {
+      "what": "test/fixtures/manifest.schema.json",
+      "why": "vendored from jahala/plotplot contracts/manifest.schema.json at 082c94fbbd39a0da90c23150405cd978685a66da; CI compares the copy with the umbrella byte for byte at the commit test/fixtures/manifest.schema.pin names."
+    }
+  ]
+}
