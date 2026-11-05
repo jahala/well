@@ -8,7 +8,7 @@
   "install": {
     "git": {
       "url": "https://github.com/jahala/well.git",
-      "rev": "784d03f52217b65bafce49e5d6f0ccda7c38de44"
+      "rev": "ff8943b23cdaf72cddbba7a87b706e91d96f3220"
     }
   },
   "faces": {
