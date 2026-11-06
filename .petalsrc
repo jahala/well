@@ -1,6 +1,6 @@
 # .petalsrc: where well's brand comes from. .brand/ is a gitignored cache of it.
 brand:
   source: https://github.com/jahala/plotplot
-  version: v1.11.1
+  version: v1.13.1
   product: well
   overrides: {}
